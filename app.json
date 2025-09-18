@@ -11,10 +11,9 @@
     "ios": {
       "supportsTablet": true
     },
-"android" : {
-"package": "com.alwishariff.saharaqrregapp"
-
-}
+    "android": {
+      "package": "com.alwishariff.saharaqrregapp"
+    },
     "web": {
       "bundler": "metro",
       "output": "single",
