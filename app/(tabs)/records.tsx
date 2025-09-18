@@ -26,6 +26,7 @@ interface QRRecord {
   qrcode: string;
   name: string;
   timestamp: string;
+  timezoneOffset?: number;
 }
 
 export default function RecordsScreen() {
@@ -65,7 +66,12 @@ export default function RecordsScreen() {
 
   const formatDisplayTime = (timestamp: string) => {
     try {
+      if (!timestamp) return 'Unknown date';
+      
       const date = new Date(timestamp);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'Invalid date';
+      
       const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
       const eatTime = new Date(utcTime + 10800000); // Add 3 hours for EAT
 
@@ -84,14 +90,20 @@ export default function RecordsScreen() {
       hours = hours ? hours : 12;
       
       return `${month} ${day}, ${year}, ${hours}:${minutes} ${ampm} EAT`;
-    } catch {
+    } catch (error) {
+      console.error('Error formatting display time:', error);
       return 'Invalid date';
     }
   };
 
   const formatCSVTime = (timestamp: string) => {
     try {
+      if (!timestamp) return 'N/A';
+      
       const date = new Date(timestamp);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'N/A';
+      
       const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
       const eatTime = new Date(utcTime + 10800000); // Add 3 hours for EAT
       
@@ -103,7 +115,8 @@ export default function RecordsScreen() {
       const seconds = eatTime.getSeconds().toString().padStart(2, '0');
       
       return `${month}/${day}/${year} ${hours}:${minutes}:${seconds} EAT`;
-    } catch {
+    } catch (error) {
+      console.error('Error formatting CSV time:', error);
       return 'N/A';
     }
   };

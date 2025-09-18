@@ -25,6 +25,7 @@ interface QRRecord {
   qrcode: string;
   name: string;
   timestamp: string;
+  timezoneOffset?: number;
 }
 
 export default function ScannerScreen() {
@@ -49,6 +50,9 @@ export default function ScannerScreen() {
   const handleQRCodeScanned = async ({ data }: { data: string }) => {
     if (isProcessing || !data || data.trim() === '') return;
     
+    // Prevent multiple scans of the same code
+    if (qrValue === data.trim()) return;
+    
     setIsProcessing(true);
     setQrValue(data.trim());
     
@@ -68,7 +72,10 @@ export default function ScannerScreen() {
       console.error('Error checking duplicates:', error);
     }
     
-    setIsProcessing(false);
+    // Add a small delay to prevent rapid re-scanning
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 1000);
   };
 
   const getRecords = async (): Promise<QRRecord[]> => {
@@ -115,16 +122,15 @@ export default function ScannerScreen() {
         return;
       }
 
-      // Create EAT timestamp
-      const now = new Date();
-      const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const eatTime = new Date(utcTime + 10800000); // Add 3 hours for EAT
-
-      const newRecord: QRRecord = {
-        qrcode: qrValue,
-        name: finalName,
-        timestamp: eatTime.toISOString(),
-      };
+    // Create record with current timestamp (will be converted to EAT for display)
+    const now = new Date();
+    
+    const newRecord: QRRecord = {
+      qrcode: qrValue,
+      name: finalName,
+      timestamp: now.toISOString(), // Store UTC timestamp, convert to EAT for display
+      timezoneOffset: 180 // Store GMT+3 offset in minutes for consistency
+    };
 
       await saveRecord(newRecord);
 
@@ -212,7 +218,7 @@ export default function ScannerScreen() {
                 <CameraView
                   style={styles.camera}
                   facing={facing}
-                  onBarcodeScanned={handleQRCodeScanned}
+                  onBarcodeScanned={isProcessing ? undefined : handleQRCodeScanned}
                   barcodeScannerSettings={{
                     barcodeTypes: ['qr'],
                   }}
